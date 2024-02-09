@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <malloc.h>
 
 int hash1(int element){
     return element%10;
