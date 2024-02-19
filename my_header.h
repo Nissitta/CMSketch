@@ -1,65 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+char* randstring(size_t length);                    //key generator
 
-//key generator
-char* randstring(size_t length) {
-    static char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";        
-    char *randomString = NULL;
+int** create_sketch(int width, int depth);          //Initialize sketch
 
-    if (length) {
-        randomString = (char*)malloc(sizeof(char) * (length +1));
+int compare(char* s1, char* s2);                    //comparing 2 strings
 
-        if (randomString) {            
-            for (int n = 0;n < length;n++) {            
-                int key = rand() % (int)(sizeof(charset) -1);
-                randomString[n] = charset[key];
-            }
+int** mergeSketch(int** sketch_1, int** aketch_2, int width, int depth);        //Merging 2 sketches
 
-            randomString[length] = '\0';
-        }
-    }
-    return randomString;
-}
-
-//Initialize sketch
-int** create_sketch(int width, int depth){
-    int** sketch = (int**)calloc(depth,sizeof(int*));
-    for(int i=0 ; i < depth; i++){
-
-        sketch[i] = (int*)calloc(width,sizeof(int));
-    }
-    return sketch;
-}
-
-int compare(char* s1, char* s2){
-    int flag=0,i=0;  
-    while(s1[i]!='\0' &&s2[i]!='\0')  
-    {  
-       if(s1[i]!=s2[i])  
-       {  
-           flag=1;  
-           break;  
-       }  
-       i++;  
-    }  
-    if(flag==0) return 1;  
-    else  return 0;  
-}
-
-int** mergeSketch(int** sketch_1, int** sketch_2, int width, int depth){
-    int **m_sketch = (int**)calloc(depth,sizeof(int*));
-    for(int i = 0; i < depth; i++){
-        m_sketch[i] = (int*)calloc(width, sizeof(int));
-    }
-
-    for(int i = 0; i<depth; i++){
-        for(int j = 0; j < width ; j++){
-            m_sketch[i][j] = sketch_1[i][j] + sketch_2[i][j];
-        }
-    }
-    return m_sketch;
-}
 
 // void MergeSketchCMS(int no_ele, int width, int depth){
 
@@ -145,10 +94,3 @@ int** mergeSketch(int** sketch_1, int** sketch_2, int width, int depth){
 //     // }
 //     // free(Arr2);
 // }
-
-
-
-
-
-
-
