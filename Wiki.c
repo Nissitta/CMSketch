@@ -386,8 +386,16 @@ void MurmurHash3_x64_128 ( const void * key, const int len, const uint32_t seed,
   ((uint64_t*)out)[1] = h2;
 }
 
-//Compute sketches
+int** create_sketch(int width, int depth){
+    int** sketch = (int**)calloc(depth,sizeof(int*));
+    for(int i=0 ; i < depth; i++){
 
+        sketch[i] = (int*)calloc(width,sizeof(int));
+    }
+    return sketch;
+}
+
+//Compute sketches
 void compute_sketch(int** sketch, int width, int depth, char** Arr, uint32_t* Keys, int no_ele){
     
     for(int i = 0; i < no_ele; i++){
@@ -401,6 +409,21 @@ void compute_sketch(int** sketch, int width, int depth, char** Arr, uint32_t* Ke
             sketch[j][h] += 1;
         }
     }
+}
+
+int compare(char* s1, char* s2){
+    int flag=0,i=0;  
+    while(s1[i]!='\0' &&s2[i]!='\0')  
+    {  
+       if(s1[i]!=s2[i])  
+       {  
+           flag=1;  
+           break;  
+       }  
+       i++;  
+    }  
+    if(flag==0) return 1;  
+    else  return 0;  
 }
 
 void query_element(int** sketch, int width, int depth,uint32_t* Keys, int no_ele, char* q){
@@ -435,7 +458,6 @@ void normal_CMS(char** Arr1, int no_ele,int width, int depth, uint32_t* Keys){
 
     compute_sketch(sketch_1,width,depth,Arr1,Keys,no_ele);
     char* q = (char*)calloc(50,sizeof(char));
-    while(1){
     printf("\nEnter the query string : ");
     
     scanf("%s",q);
@@ -446,13 +468,38 @@ void normal_CMS(char** Arr1, int no_ele,int width, int depth, uint32_t* Keys){
     actual_occurence(Arr1,q,no_ele);
     printf("\n");
 
-    }
+    // for(int depth_iter = 0; depth_iter < depth; depth_iter++){
+    //   for(int width_iter = 0; width_iter < width;width_iter++){
+    //       printf("%d ",sketch_1[depth_iter][width_iter]);
+    //   }
+    //   printf("\n");
+    // }
+
 
     for(int i = 0; i < depth; i++){
         free(sketch_1[i]);
     }
     free(sketch_1);
     free(q);
+}
+
+char* randstring(size_t length) {
+    static char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";        
+    char *randomString = NULL;
+
+    if (length) {
+        randomString = (char*)malloc(sizeof(char) * (length +1));
+
+        if (randomString) {            
+            for (int n = 0;n < length;n++) {            
+                int key = rand() % (int)(sizeof(charset) -1);
+                randomString[n] = charset[key];
+            }
+
+            randomString[length] = '\0';
+        }
+    }
+    return randomString;
 }
 
 int main(){
@@ -470,8 +517,8 @@ int main(){
     // int width = (int)(ceil(exp(1)/ep));   //28
     // int depth = (int)(ceil(log10(1/del)));  //3
 
-    int width = 272;
-    int depth = 5;
+    int width = 1500;
+    int depth = 12;
 
     int no_words=2000000;
     int max_line_length = 40;
@@ -516,6 +563,7 @@ int main(){
 
     //----------------- FREE MEMORY ------------------
 
+    
     for(int i = 0; i<no_words; i++){
         free(Arr[i]);
     }
@@ -523,3 +571,18 @@ int main(){
     free(Keys);
 
 }
+
+int** mergeSketch(int** sketch_1, int** sketch_2, int width, int depth){
+    int **m_sketch = (int**)calloc(depth,sizeof(int*));
+    for(int i = 0; i < depth; i++){
+        m_sketch[i] = (int*)calloc(width, sizeof(int));
+    }
+
+    for(int i = 0; i<depth; i++){
+        for(int j = 0; j < width ; j++){
+            m_sketch[i][j] = sketch_1[i][j] + sketch_2[i][j];
+        }
+    }
+    return m_sketch;
+}
+
