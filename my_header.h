@@ -6,6 +6,7 @@
 #define LONG_PRIME 4294967311l
 #define HASH_LITTLE_ENDIAN 1
 #define BUZZ_SIZE 100000
+#define SHIFT_AMOUNT 51
 
 //mix method for FastHash
 #define mix_fh(h)                                                                 \
@@ -124,6 +125,13 @@ void CMS(char** Arr1, int no_ele,int width, int depth);
 
 //Hashlittle hash function returning 32 bit hash value
 uint32_t hashlittle( const void *key, size_t length, uint32_t initval);
+
+//Scale down 32 bit hash to integer og range min_num to max_num
+int number_from_32_bit_hash(uint32_t hash_value, int bucket_size);
+
+//Scale down 64 bit hash to integer of range min_num to max_num
+int number_from_64_bit_hash(uint64_t hash_value, int bucket_size);
+
 
 //CMS using FastHash 64 bit
 void CMS_fastHash64(char** Arr, int no_ele, int width, int depth);
