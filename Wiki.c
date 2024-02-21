@@ -339,9 +339,11 @@ void compute_sketch_64_bit(int** sketch, int width, int depth, char** Arr, uint6
 
             //Include proper necessary hash functions
             
-            //h = HMAC_SHA256(Keys[j], Arr[i],width);                       //HMAC_SHA256 
-            //h = fasthash32(Arr[i],strlen(Arr[i]), Keys[j]) % width;       //FastHash32 bits    
-            h = fasthash64(Arr[i], strlen(Arr[i]),Keys[j])%width;           //FastHash64 bits           
+            // h = fasthash64(Arr[i], strlen(Arr[i]),Keys[j]);           //FastHash64 bits
+            // uint64_t shiftedHash = h >> SHIFT_AMOUNT;      
+            // uint64_t maskedBits = shiftedHash & 0x3FFF;
+            // h = (int)maskedBits;
+            h = number_from_64_bit_hash(fasthash64(Arr[i], strlen(Arr[i]), Keys[j]), width);
             sketch[j][h] += 1;
         }
     }
@@ -352,7 +354,7 @@ void compute_sketch_32_bit(int** sketch, int width, int depth, char** Arr, uint3
     for(int i = 0; i < no_ele; i++){
         for(int j = 0; j < depth; j++){
             int h=0;
-            h = fasthash32(Arr[i],strlen(Arr[i]), Keys[j]) % width;       //FastHash32 bits             
+            h = number_from_32_bit_hash(fasthash32(Arr[i],strlen(Arr[i]), Keys[j]),width);       //FastHash32 bits             
             sketch[j][h] += 1;
         }
     }
@@ -395,9 +397,12 @@ void query_element_fastHash_64_bit(int** sketch, int width, int depth,uint64_t* 
 
         //h = HMAC_SHA256(Keys[iter], q,width);                 //HMAC_SHA256
         //h = fasthash32(q,strlen(q), Keys[iter]) % width;      //FastHash32 bits
-        h = fasthash64(q,strlen(q), Keys[iter]) % width;        //FastHash64 bits
+        // h = fasthash64(q,strlen(q), Keys[iter]) % width;        //FastHash64 bits
+        // uint64_t shiftedHash = h >> SHIFT_AMOUNT;      
+        // uint64_t maskedBits = shiftedHash & 0x3FFF;
+        // h = (int)maskedBits;
 
-        int deter = sketch[iter][h];
+        h = number_from_64_bit_hash(fasthash64(q, strlen(q), Keys[iter]), width);
         if(min > sketch[iter][h]){
             min = sketch[iter][h];
         }
@@ -416,8 +421,9 @@ void query_element_fastHash_32_bit(int** sketch, int width, int depth,uint32_t* 
 
         //h = HMAC_SHA256(Keys[iter], q,width);                 //HMAC_SHA256
         //h = fasthash32(q,strlen(q), Keys[iter]) % width;      //FastHash32 bits
-        h = fasthash64(q,strlen(q), Keys[iter]) % width;        //FastHash64 bits
+        // h = fasthash64(q,strlen(q), Keys[iter]) % width;        //FastHash64 bits
 
+        h = number_from_32_bit_hash(fasthash32(q, strlen(q), Keys[iter]), width);
         int deter = sketch[iter][h];
         if(min > sketch[iter][h]){
             min = sketch[iter][h];
@@ -502,6 +508,25 @@ void CMS(char** Arr, int no_ele,int width, int depth){
     free(Keys);
 }
 
+
+int number_from_32_bit_hash(uint32_t hash_value, int bucket_size) {
+    int num_bits = (int)ceil(log2(bucket_size));
+    int shift_amount = 32 - num_bits;
+    uint32_t shifted_hash = hash_value >> shift_amount;
+    uint32_t masked_bits = shifted_hash & ((1 << num_bits) - 1); 
+    int bucket_index = (int)masked_bits;
+    return bucket_index;
+}
+
+int number_from_64_bit_hash(uint64_t hash_value, int bucket_size) {
+    int num_bits = (int)ceil(log2(bucket_size));
+    int shift_amount = 64 - num_bits + 1;
+    uint64_t shifted_hash = hash_value >> shift_amount;
+    uint64_t masked_bits = shifted_hash & ((1 << num_bits) - 1);
+    int bucket_index = (int)masked_bits;
+    return bucket_index;
+}
+
 void CMS_fastHash64(char** Arr, int no_ele, int width, int depth){
     uint64_t* Keys = Arr_of_Keys_64bit(depth);
     int** sketch = create_sketch(width,depth);
@@ -514,7 +539,7 @@ void CMS_fastHash64(char** Arr, int no_ele, int width, int depth){
         scanf("%s",q);
         query_element_fastHash_64_bit(sketch,width,depth,Keys,no_ele,q);
 
-        actual_occurence(Arr,q,no_ele);
+        //actual_occurence(Arr,q,no_ele);
         printf("\n");
 
         printf("Do you want to repeat ? (1/0)");
@@ -541,7 +566,7 @@ void CMS_fastHash32(char** Arr, int no_ele, int width, int depth){
         scanf("%s",q);
         query_element_fastHash_32_bit(sketch,width,depth,Keys,no_ele,q);
 
-        actual_occurence(Arr,q,no_ele);
+        // actual_occurence(Arr,q,no_ele);
         printf("\n");
 
         printf("Do you want to repeat ? (1/0)");
@@ -562,15 +587,15 @@ int main(){
     // int width = (int)(ceil(exp(1)/ep));   
     // int depth = (int)(ceil(log10(1/del))); 
 
-    int width = 1000;
+    int width = 100;
     int depth = 10;
-    int no_words=2000000;
+    int no_words=20000000;
     
     printf("Initializing Count Min Sketch..... ");
     printf("\nWidth : %d and depth :%d\n\n",width,depth);
 
     char** Arr = (char**)calloc(no_words,sizeof(char*));
-    int count_of_elements = data_from_file("unique_words_10000.txt",no_words,Arr);
+    int count_of_elements = data_from_file("unique_words_500.txt",no_words,Arr);
     
     //count min sketch using FastHash64 bit hash function
     CMS_fastHash64(Arr,count_of_elements,width,depth);
